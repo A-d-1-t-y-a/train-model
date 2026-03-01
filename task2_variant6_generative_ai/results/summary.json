@@ -1,0 +1,16 @@
+{
+  "DQN Raw": {
+    "total_matches": 100,
+    "wins": 22,
+    "win_rate": 0.22,
+    "avg_position": 1.43,
+    "training_time": 135.17136359214783
+  },
+  "DQN + VAE": {
+    "total_matches": 100,
+    "wins": 25,
+    "win_rate": 0.25,
+    "avg_position": 1.59,
+    "training_time": 229.4355309009552
+  }
+}

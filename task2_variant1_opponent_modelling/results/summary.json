@@ -1,0 +1,20 @@
+{
+  "Random (No OppModel)": {
+    "total": 100,
+    "wins": 41,
+    "win_rate": 0.41,
+    "avg_position": 1.06
+  },
+  "Random (With OppModel)": {
+    "total": 100,
+    "wins": 54,
+    "win_rate": 0.54,
+    "avg_position": 0.77
+  },
+  "Mixed (With OppModel)": {
+    "total": 100,
+    "wins": 24,
+    "win_rate": 0.24,
+    "avg_position": 1.24
+  }
+}

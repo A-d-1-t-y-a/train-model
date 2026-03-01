@@ -1,0 +1,30 @@
+{
+  "Sparse": {
+    "total_matches": 100,
+    "wins": 28,
+    "win_rate": 0.28,
+    "avg_position": 1.46,
+    "training_time": 137.23498940467834
+  },
+  "Shaped": {
+    "total_matches": 100,
+    "wins": 15,
+    "win_rate": 0.15,
+    "avg_position": 1.92,
+    "training_time": 230.70429229736328
+  },
+  "Auxiliary": {
+    "total_matches": 100,
+    "wins": 40,
+    "win_rate": 0.4,
+    "avg_position": 1.14,
+    "training_time": 144.28517651557922
+  },
+  "PerformanceScore": {
+    "total_matches": 100,
+    "wins": 26,
+    "win_rate": 0.26,
+    "avg_position": 1.46,
+    "training_time": 113.18751335144043
+  }
+}

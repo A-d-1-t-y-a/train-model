@@ -1,10 +1,4 @@
 /venv/
-/results/   
-/task1/results/
-/task2_variant1_opponent_modelling/results/
-/task2_variant3_sparse_reward/results/
-/task2_variant6_generative_ai/results/
-/task2_variant7_reinforcement_learning/results/
 pycache/
 __pycache__/
 .pytest_cache/
