@@ -276,8 +276,8 @@ def main():
     args = parser.parse_args()
 
     if args.quick:
-        args.num_games = 5
-        args.matches_per_game = 2
+        args.num_games = 20
+        args.matches_per_game = 5
 
     all_metrics = {}
 

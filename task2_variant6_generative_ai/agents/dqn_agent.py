@@ -154,11 +154,11 @@ class DQNAgentWithVAE(ChefsHatPlayer):
         learning_rate=1e-3,
         gamma=0.99,
         epsilon_start=1.0,
-        epsilon_end=0.05,
-        epsilon_decay=0.9995,
+        epsilon_end=0.02,
+        epsilon_decay=0.999,
         batch_size=64,
         memory_size=50000,
-        target_update_freq=200,
+        target_update_freq=100,
         # VAE hyperparameters
         vae_latent_dim=16,
         vae_lr=1e-3,
@@ -220,6 +220,7 @@ class DQNAgentWithVAE(ChefsHatPlayer):
         self.current_action = None
         self.current_action_mask = None
         self.my_player_index = -1
+        self.prev_game_score = [0, 0, 0, 0]
         self.steps = 0
         self.training_losses = []
         self.vae_losses = []
@@ -345,20 +346,14 @@ class DQNAgentWithVAE(ChefsHatPlayer):
         return True
 
     def get_reward(self, info):
-        player_idx = self.my_player_index
-        finished = info.get("Finished_Players", [False]*4)
-        if player_idx < len(finished) and finished[player_idx]:
-            score = info.get("Match_Score", [-1]*4)[player_idx]
-            if score == 3:
-                return 1.0
-            else:
-                return -0.001
+        """Intermediate reward only. Terminal reward is in update_end_match."""
         return -0.001
 
     def update_start_match(self, cards, players, starting_player):
         self.current_state = None
         self.current_action = None
         self.current_episode_reward = 0.0
+        self.prev_game_score = [0, 0, 0, 0]
         my_name = self.get_name()
         if isinstance(players, list):
             for i, p in enumerate(players):
@@ -370,9 +365,13 @@ class DQNAgentWithVAE(ChefsHatPlayer):
         reward = self.get_reward(envInfo)
         self.current_episode_reward += reward
 
-        next_state = self.current_state
-        finished = envInfo.get("Finished_Players", [False]*4)
-        done = finished[self.my_player_index] if 0 <= self.my_player_index < len(finished) else False
+        obs_after = envInfo.get("Observation_After", None)
+        if obs_after is not None:
+            next_state = self._extract_state(obs_after)
+            next_mask = self._extract_action_mask(obs_after)
+        else:
+            next_state = self.current_state
+            next_mask = self.current_action_mask
 
         if self.current_state is not None and self.current_action is not None:
             self.memory.append((
@@ -381,8 +380,8 @@ class DQNAgentWithVAE(ChefsHatPlayer):
                 self.current_action,
                 reward,
                 next_state,
-                self.current_action_mask,
-                done,
+                next_mask,
+                False,
             ))
 
         self.steps += 1
@@ -399,15 +398,32 @@ class DQNAgentWithVAE(ChefsHatPlayer):
         pass
 
     def update_end_match(self, envInfo):
-        match_score = envInfo.get("Match_Score", [-1]*4)
-        if 0 <= self.my_player_index < len(match_score):
-            score = match_score[self.my_player_index]
-            position = 3 - score
+        game_score = envInfo.get("Game_Score", [0]*4)
+        if 0 <= self.my_player_index < len(game_score):
+            my_match_score = game_score[self.my_player_index] - self.prev_game_score[self.my_player_index]
+            position = 3 - my_match_score
         else:
             position = 3
+        self.prev_game_score = [int(s) for s in game_score]
+
+        position_rewards = {0: 1.0, 1: 0.3, 2: -0.3, 3: -1.0}
+        terminal_reward = position_rewards.get(position, -1.0)
+
+        if self.current_state is not None and self.current_action is not None:
+            self.memory.append((
+                self.current_state, self.current_action_mask,
+                self.current_action, terminal_reward,
+                self.current_state, self.current_action_mask, True,
+            ))
+
+        self.current_episode_reward += terminal_reward
         self.match_positions.append(position)
         self.match_wins.append(1 if position == 0 else 0)
         self.episode_rewards.append(self.current_episode_reward)
+
+        self.current_state = None
+        self.current_action = None
+        self.current_episode_reward = 0.0
 
     def update_game_over(self):
         pass

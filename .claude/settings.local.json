@@ -17,7 +17,8 @@
       "Bash(D:/projects/train-model/task2_variant1_opponent_modelling/venv/Scripts/python.exe:*)",
       "Bash(D:/projects/train-model/task2_variant3_sparse_reward/venv/Scripts/python.exe:*)",
       "Bash(D:/projects/train-model/task2_variant6_generative_ai/venv/Scripts/python.exe:*)",
-      "Bash(venv/Scripts/python.exe:*)"
+      "Bash(venv/Scripts/python.exe:*)",
+      "Bash(D:/projects/train-model/task1/venv/Scripts/python.exe:*)"
     ]
   }
 }

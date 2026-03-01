@@ -337,9 +337,9 @@ def main():
     args = parser.parse_args()
 
     if args.quick:
-        args.num_games = 5
-        args.matches_per_game = 2
-        print("Quick mode: 5 games, 2 matches each")
+        args.num_games = 20
+        args.matches_per_game = 5
+        print("Quick mode: 20 games, 5 matches each")
 
     all_metrics = {}
 

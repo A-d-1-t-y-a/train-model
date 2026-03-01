@@ -81,12 +81,12 @@ class DQNAgentWithOpponentModelling(ChefsHatPlayer):
         learning_rate=1e-3,
         gamma=0.99,
         epsilon_start=1.0,
-        epsilon_end=0.05,
-        epsilon_decay=0.9995,
+        epsilon_end=0.02,
+        epsilon_decay=0.999,
         batch_size=64,
         memory_size=50000,
-        target_update_freq=100,
-        tau=0.005,
+        target_update_freq=50,
+        tau=0.01,
         opponent_lr=1e-3,
         use_opponent_model=True,
     ):
@@ -129,6 +129,8 @@ class DQNAgentWithOpponentModelling(ChefsHatPlayer):
         self.current_action = None
         self.current_action_mask = None
         self.my_player_index = -1
+        self.prev_cards = 17
+        self.prev_game_score = [0, 0, 0, 0]
         self.steps = 0
 
         # Metrics
@@ -185,32 +187,29 @@ class DQNAgentWithOpponentModelling(ChefsHatPlayer):
         return True
 
     def get_reward(self, info):
+        """Intermediate reward based on card play. Terminal reward is in update_end_match."""
         player_idx = self.my_player_index
         if player_idx < 0:
             player_idx = info.get("Author_Index", 0)
 
-        finished_players = info.get("Finished_Players", [False]*4)
-        is_finished = finished_players[player_idx] if player_idx < len(finished_players) else False
-
-        if is_finished:
-            match_score = info.get("Match_Score", [-1]*4)
-            score = match_score[player_idx] if player_idx < len(match_score) else 0
-            position = 3 - score  # 3->0(1st), 2->1(2nd), 1->2(3rd), 0->3(4th)
-            if position == 0:
-                return 1.0
-            elif position == 1:
-                return 0.3
-            elif position == 2:
-                return -0.3
-            else:
-                return -1.0
-        return -0.001
+        reward = 0.0
+        cards = info.get("Cards_Per_Player", [17]*4)
+        if player_idx < len(cards):
+            current = int(cards[player_idx])
+            played = self.prev_cards - current
+            if played > 0:
+                reward += 0.02 * played
+            elif played == 0:
+                reward -= 0.005
+            self.prev_cards = current
+        return reward
 
     def update_start_match(self, cards, players, starting_player):
         self.current_state = None
         self.current_action = None
         self.current_episode_reward = 0.0
-        # Determine our player index from name
+        self.prev_cards = 17
+        self.prev_game_score = [0, 0, 0, 0]
         my_name = self.get_name()
         if isinstance(players, list):
             for i, pname in enumerate(players):
@@ -222,9 +221,13 @@ class DQNAgentWithOpponentModelling(ChefsHatPlayer):
         reward = self.get_reward(envInfo)
         self.current_episode_reward += reward
 
-        next_state = self.current_state
-        finished_players = envInfo.get("Finished_Players", [False]*4)
-        done = finished_players[self.my_player_index] if self.my_player_index >= 0 and self.my_player_index < len(finished_players) else False
+        obs_after = envInfo.get("Observation_After", None)
+        if obs_after is not None:
+            next_state = self._extract_state(obs_after)
+            next_mask = self._extract_action_mask(obs_after)
+        else:
+            next_state = self.current_state
+            next_mask = self.current_action_mask
 
         if self.current_state is not None and self.current_action is not None:
             self.memory.append((
@@ -233,8 +236,8 @@ class DQNAgentWithOpponentModelling(ChefsHatPlayer):
                 self.current_action,
                 reward,
                 next_state,
-                self.current_action_mask,
-                done,
+                next_mask,
+                False,
             ))
 
         self.steps += 1
@@ -259,16 +262,33 @@ class DQNAgentWithOpponentModelling(ChefsHatPlayer):
                 self._train_opponent_model()
 
     def update_end_match(self, envInfo):
-        match_score = envInfo.get("Match_Score", [-1]*4)
-        if self.my_player_index >= 0 and self.my_player_index < len(match_score):
-            score = match_score[self.my_player_index]
-            position = 3 - score
+        game_score = envInfo.get("Game_Score", [0]*4)
+        if 0 <= self.my_player_index < len(game_score):
+            my_match_score = game_score[self.my_player_index] - self.prev_game_score[self.my_player_index]
+            position = 3 - my_match_score
         else:
             position = 3
+        self.prev_game_score = [int(s) for s in game_score]
 
+        position_rewards = {0: 1.0, 1: 0.3, 2: -0.3, 3: -1.0}
+        terminal_reward = position_rewards.get(position, -1.0)
+
+        if self.current_state is not None and self.current_action is not None:
+            self.memory.append((
+                self.current_state, self.current_action_mask,
+                self.current_action, terminal_reward,
+                self.current_state, self.current_action_mask, True,
+            ))
+
+        self.current_episode_reward += terminal_reward
         self.match_positions.append(position)
         self.match_wins.append(1 if position == 0 else 0)
         self.episode_rewards.append(self.current_episode_reward)
+
+        self.current_state = None
+        self.current_action = None
+        self.current_episode_reward = 0.0
+        self.prev_cards = 17
 
     def update_game_over(self):
         pass
