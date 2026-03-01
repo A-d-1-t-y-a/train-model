@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:chefshatgym.readthedocs.io)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(curl:*)",
+      "WebFetch(domain:pypi.org)",
+      "Bash(pip:*)",
+      "Bash(py:*)",
+      "Bash(D:/projects/train-model/task2_variant1_opponent_modelling/venv/Scripts/pip.exe install:*)",
+      "Bash(D:/projects/train-model/task2_variant3_sparse_reward/venv/Scripts/pip.exe install:*)",
+      "Bash(D:/projects/train-model/task2_variant6_generative_ai/venv/Scripts/pip.exe install:*)",
+      "Bash(D:/projects/train-model/task2_variant1_opponent_modelling/venv/Scripts/pip.exe show:*)",
+      "Bash(python:*)",
+      "Bash(xargs grep:*)",
+      "Bash(D:/projects/train-model/task2_variant1_opponent_modelling/venv/Scripts/python.exe:*)",
+      "Bash(D:/projects/train-model/task2_variant3_sparse_reward/venv/Scripts/python.exe:*)",
+      "Bash(D:/projects/train-model/task2_variant6_generative_ai/venv/Scripts/python.exe:*)",
+      "Bash(venv/Scripts/python.exe:*)"
+    ]
+  }
+}
